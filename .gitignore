@@ -1,0 +1,15 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+.pytest_cache/
+
+# large downloaded artifacts (see README for download commands)
+data/raw/
+models/*.pth
+results/cache/
+
+# TeX build intermediates
+report/*.aux report/*.log report/*.out report/*.toc

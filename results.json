@@ -1,0 +1,27 @@
+{
+  "noise_breakdown": {
+    "original": 121151,
+    "gaussian_perturbed": 121151,
+    "outliers_added": 9692,
+    "fog_points_added": 4846,
+    "total_noisy": 135689
+  },
+  "metrics": {
+    "cd_noisy_vs_clean": 0.091481,
+    "cd_sor_vs_clean": 0.022044,
+    "cd_sor_ror_vs_clean": 0.015192,
+    "improvement_sor_pct": 75.9,
+    "improvement_final_pct": 83.39,
+    "retention_sor_pct": 92.65,
+    "retention_final_pct": 90.02,
+    "sor_time_ms": 164.03,
+    "ror_time_ms": 9396.72,
+    "total_time_ms": 9560.76
+  },
+  "point_counts": {
+    "clean": 121151,
+    "noisy": 135689,
+    "after_sor": 125713,
+    "after_sor_ror": 122154
+  }
+}

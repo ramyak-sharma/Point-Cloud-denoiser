@@ -1,0 +1,86 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# LiDAR Point Cloud Denoising — pipeline configuration
+# Capstone CPG No. 5, Thapar Institute of Engineering and Technology
+#
+# All stages of the pipeline read from this file so that any team member can
+# reproduce a run by editing paths/hyperparameters here instead of the code.
+# Distances are in metres (KITTI Velodyne frame) unless stated otherwise.
+# ─────────────────────────────────────────────────────────────────────────────
+
+data:
+  # Directories scanned (recursively) for KITTI raw *.bin Velodyne scans.
+  raw_dirs:
+    - data/raw
+    - data            # the original 5 sample frames live directly in data/
+  # Train/val/test split fractions over frames (deterministic, seeded).
+  split: [0.8, 0.1, 0.1]
+  seed: 42
+
+preprocessing:
+  # Voxel-grid downsampling edge length (m). 0 disables downsampling.
+  voxel_size: 0.15
+  # Keep points within this radius (m) of the sensor; KITTI HDL-64E max ~120 m.
+  max_range: 60.0
+  # Drop points below the ground-plane guard (m, sensor frame z). Disabled by
+  # default — ground points are legitimate structure for detection.
+  min_z: null
+
+noise:
+  # Per-point Gaussian jitter (m) — models sensor vibration / ranging error.
+  gaussian_sigma: 0.05
+  # Uniform random outliers added, as a fraction of clean point count —
+  # models multi-echo interference and spurious returns.
+  outlier_ratio: 0.08
+  # Fog/rain-style backscatter points, as a fraction of clean point count.
+  # Sampled near the sensor with exponentially distributed range.
+  fog_ratio: 0.04
+  fog_mean_range: 8.0     # mean radial distance (m) of backscatter returns
+  fog_max_range: 25.0
+
+filters:
+  sor:
+    nb_neighbors: 20      # k in the proposal's Section 3.1 formulation
+    std_ratio: 2.0        # alpha — global std-dev multiplier
+  ror:
+    nb_points: 4          # minimum neighbours required...
+    radius: 0.6           # ...within this radius (m)
+
+patches:
+  points_per_patch: 256   # k-NN patch size fed to the networks
+  overlap_factor: 3.0     # avg number of patches covering each point
+  max_patches_per_frame: 400
+
+model:
+  pointnet_ae:
+    latent_dim: 256
+    decoder_hidden: 512
+  dgcnn:
+    k: 16                 # neighbours per EdgeConv graph
+    hidden_dims: [64, 64, 128]
+    emb_dim: 256
+
+training:
+  batch_size: 64
+  # 10 epochs is the largest run feasible on the team's M1 laptop (~1 h for
+  # DGCNN on MPS); with CUDA GPU access raise this to 30-50 (see README).
+  epochs: 10
+  lr: 1.0e-3
+  weight_decay: 1.0e-5
+  num_workers: 0
+  device: auto            # auto -> mps if available, else cpu; or "cpu"/"cuda"
+  log_dir: results/logs
+  checkpoint_dir: results/checkpoints
+  # Weight of the outlier-classification loss term (DGCNN only).
+  outlier_loss_weight: 1.0
+
+evaluation:
+  num_test_frames: 10     # frames used for the metrics tables
+  results_dir: results
+
+detection:
+  # mmdetection3d KITTI-pretrained PointPillars (3-class) used for the
+  # detection-consistency protocol (clean-cloud detections as reference).
+  config: pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class
+  score_threshold: 0.4
+  iou_threshold: 0.5      # BEV IoU for matching boxes across conditions
+  num_frames: 10
