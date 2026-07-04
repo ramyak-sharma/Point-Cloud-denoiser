@@ -1,0 +1,314 @@
+{
+  "per_frame": {
+    "noisy": [
+      {
+        "n_reference": 3,
+        "n_predicted": 2,
+        "matched": 2,
+        "recall": 0.6666666666666666,
+        "precision": 1.0
+      },
+      {
+        "n_reference": 6,
+        "n_predicted": 7,
+        "matched": 6,
+        "recall": 1.0,
+        "precision": 0.8571428571428571
+      },
+      {
+        "n_reference": 9,
+        "n_predicted": 7,
+        "matched": 7,
+        "recall": 0.7777777777777778,
+        "precision": 1.0
+      },
+      {
+        "n_reference": 3,
+        "n_predicted": 1,
+        "matched": 0,
+        "recall": 0.0,
+        "precision": 0.0
+      },
+      {
+        "n_reference": 7,
+        "n_predicted": 8,
+        "matched": 7,
+        "recall": 1.0,
+        "precision": 0.875
+      },
+      {
+        "n_reference": 9,
+        "n_predicted": 8,
+        "matched": 8,
+        "recall": 0.8888888888888888,
+        "precision": 1.0
+      },
+      {
+        "n_reference": 4,
+        "n_predicted": 5,
+        "matched": 4,
+        "recall": 1.0,
+        "precision": 0.8
+      },
+      {
+        "n_reference": 5,
+        "n_predicted": 3,
+        "matched": 3,
+        "recall": 0.6,
+        "precision": 1.0
+      },
+      {
+        "n_reference": 7,
+        "n_predicted": 7,
+        "matched": 7,
+        "recall": 1.0,
+        "precision": 1.0
+      },
+      {
+        "n_reference": 6,
+        "n_predicted": 4,
+        "matched": 4,
+        "recall": 0.6666666666666666,
+        "precision": 1.0
+      }
+    ],
+    "SOR+ROR": [
+      {
+        "n_reference": 3,
+        "n_predicted": 4,
+        "matched": 3,
+        "recall": 1.0,
+        "precision": 0.75
+      },
+      {
+        "n_reference": 6,
+        "n_predicted": 5,
+        "matched": 5,
+        "recall": 0.8333333333333334,
+        "precision": 1.0
+      },
+      {
+        "n_reference": 9,
+        "n_predicted": 8,
+        "matched": 8,
+        "recall": 0.8888888888888888,
+        "precision": 1.0
+      },
+      {
+        "n_reference": 3,
+        "n_predicted": 0,
+        "matched": 0,
+        "recall": 0.0,
+        "precision": 1.0
+      },
+      {
+        "n_reference": 7,
+        "n_predicted": 7,
+        "matched": 7,
+        "recall": 1.0,
+        "precision": 1.0
+      },
+      {
+        "n_reference": 9,
+        "n_predicted": 7,
+        "matched": 7,
+        "recall": 0.7777777777777778,
+        "precision": 1.0
+      },
+      {
+        "n_reference": 4,
+        "n_predicted": 4,
+        "matched": 4,
+        "recall": 1.0,
+        "precision": 1.0
+      },
+      {
+        "n_reference": 5,
+        "n_predicted": 0,
+        "matched": 0,
+        "recall": 0.0,
+        "precision": 1.0
+      },
+      {
+        "n_reference": 7,
+        "n_predicted": 7,
+        "matched": 7,
+        "recall": 1.0,
+        "precision": 1.0
+      },
+      {
+        "n_reference": 6,
+        "n_predicted": 5,
+        "matched": 5,
+        "recall": 0.8333333333333334,
+        "precision": 1.0
+      }
+    ],
+    "pointnet_ae": [
+      {
+        "n_reference": 3,
+        "n_predicted": 1,
+        "matched": 0,
+        "recall": 0.0,
+        "precision": 0.0
+      },
+      {
+        "n_reference": 6,
+        "n_predicted": 0,
+        "matched": 0,
+        "recall": 0.0,
+        "precision": 1.0
+      },
+      {
+        "n_reference": 9,
+        "n_predicted": 2,
+        "matched": 1,
+        "recall": 0.1111111111111111,
+        "precision": 0.5
+      },
+      {
+        "n_reference": 3,
+        "n_predicted": 0,
+        "matched": 0,
+        "recall": 0.0,
+        "precision": 1.0
+      },
+      {
+        "n_reference": 7,
+        "n_predicted": 1,
+        "matched": 1,
+        "recall": 0.14285714285714285,
+        "precision": 1.0
+      },
+      {
+        "n_reference": 9,
+        "n_predicted": 1,
+        "matched": 1,
+        "recall": 0.1111111111111111,
+        "precision": 1.0
+      },
+      {
+        "n_reference": 4,
+        "n_predicted": 1,
+        "matched": 0,
+        "recall": 0.0,
+        "precision": 0.0
+      },
+      {
+        "n_reference": 5,
+        "n_predicted": 0,
+        "matched": 0,
+        "recall": 0.0,
+        "precision": 1.0
+      },
+      {
+        "n_reference": 7,
+        "n_predicted": 1,
+        "matched": 1,
+        "recall": 0.14285714285714285,
+        "precision": 1.0
+      },
+      {
+        "n_reference": 6,
+        "n_predicted": 1,
+        "matched": 1,
+        "recall": 0.16666666666666666,
+        "precision": 1.0
+      }
+    ],
+    "dgcnn": [
+      {
+        "n_reference": 3,
+        "n_predicted": 3,
+        "matched": 2,
+        "recall": 0.6666666666666666,
+        "precision": 0.6666666666666666
+      },
+      {
+        "n_reference": 6,
+        "n_predicted": 6,
+        "matched": 6,
+        "recall": 1.0,
+        "precision": 1.0
+      },
+      {
+        "n_reference": 9,
+        "n_predicted": 9,
+        "matched": 8,
+        "recall": 0.8888888888888888,
+        "precision": 0.8888888888888888
+      },
+      {
+        "n_reference": 3,
+        "n_predicted": 0,
+        "matched": 0,
+        "recall": 0.0,
+        "precision": 1.0
+      },
+      {
+        "n_reference": 7,
+        "n_predicted": 8,
+        "matched": 7,
+        "recall": 1.0,
+        "precision": 0.875
+      },
+      {
+        "n_reference": 9,
+        "n_predicted": 8,
+        "matched": 8,
+        "recall": 0.8888888888888888,
+        "precision": 1.0
+      },
+      {
+        "n_reference": 4,
+        "n_predicted": 6,
+        "matched": 4,
+        "recall": 1.0,
+        "precision": 0.6666666666666666
+      },
+      {
+        "n_reference": 5,
+        "n_predicted": 5,
+        "matched": 3,
+        "recall": 0.6,
+        "precision": 0.6
+      },
+      {
+        "n_reference": 7,
+        "n_predicted": 7,
+        "matched": 7,
+        "recall": 1.0,
+        "precision": 1.0
+      },
+      {
+        "n_reference": 6,
+        "n_predicted": 5,
+        "matched": 5,
+        "recall": 0.8333333333333334,
+        "precision": 1.0
+      }
+    ]
+  },
+  "summary": {
+    "noisy": {
+      "recall": 0.76,
+      "precision": 0.8532142857142857,
+      "mean_reference_boxes": 5.9
+    },
+    "SOR+ROR": {
+      "recall": 0.7333333333333333,
+      "precision": 0.975,
+      "mean_reference_boxes": 5.9
+    },
+    "pointnet_ae": {
+      "recall": 0.06746031746031746,
+      "precision": 0.75,
+      "mean_reference_boxes": 5.9
+    },
+    "dgcnn": {
+      "recall": 0.7877777777777777,
+      "precision": 0.8697222222222223,
+      "mean_reference_boxes": 5.9
+    }
+  }
+}

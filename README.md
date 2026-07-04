@@ -121,6 +121,20 @@ report what fraction survive (recall) and how many spurious boxes appear
 much detector performance the denoiser recovers, without fabricating ground
 truth. Results: `results/detection_consistency.json`.
 
+## Headline results (10 held-out KITTI frames, Apple M1)
+
+| Method | CD (m) ↓ | HD95 (m) ↓ | CD impr. | Det. recall ↑ | Det. precision ↑ | Latency |
+|---|---|---|---|---|---|---|
+| Noisy input | 0.403 | — | — | 0.760 | 0.853 | — |
+| **SOR+ROR** | **0.095** | **0.136** | **75.5%** | 0.733 | **0.975** | **104 ms** |
+| PointNet-AE | 0.374 | 1.835 | 5.4% | 0.067 | 0.750 | 282 ms (MPS) |
+| **DGCNN** | 0.162 | 0.156 | 59.1% | **0.788** | 0.870 | 3.0 s (MPS) |
+
+Full discussion (ablations, quantisation, honest 10 Hz assessment) in
+`report/technical_summary.pdf`. Key finding: Chamfer Distance alone does not
+predict downstream detection quality — the AE is near-noisy on CD yet
+catastrophic for the detector, while DGCNN recovers the most detections.
+
 ## Deferred: hardware component
 
 The proposal's YDLIDAR X2 / Raspberry Pi live-capture component is

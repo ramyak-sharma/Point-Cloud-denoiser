@@ -43,6 +43,10 @@ def quantize_dynamic(model: torch.nn.Module) -> torch.nn.Module:
     backend, so EdgeConv convolutions stay float32; the FC-heavy PointNet AE
     decoder benefits the most.
     """
+    # macOS arm64 torch ships only the qnnpack engine, and none is selected
+    # by default — without this, linear_prepack raises "NoQEngine".
+    if "qnnpack" in torch.backends.quantized.supported_engines:
+        torch.backends.quantized.engine = "qnnpack"
     cpu_model = deepcopy(model).cpu().eval()
     return torch.ao.quantization.quantize_dynamic(
         cpu_model, {torch.nn.Linear}, dtype=torch.qint8

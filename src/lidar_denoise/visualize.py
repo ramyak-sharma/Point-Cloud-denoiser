@@ -37,7 +37,9 @@ def before_after_figure(
         _bev_axes(ax, pts, name)
     if suptitle:
         fig.suptitle(suptitle, fontsize=11)
-    fig.tight_layout()
+        fig.tight_layout(rect=(0, 0, 1, 0.92))   # keep panel titles clear of it
+    else:
+        fig.tight_layout()
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=180)
     plt.close(fig)
