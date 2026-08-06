@@ -1,3 +1,0 @@
-0000000000000000000000000000000000000000 bf2d91504d2721c6dbe9131ab48784cd82513126 mac <mac@macs-MacBook-Pro.local> 1777915311 +0530	commit (initial): initial commit
-bf2d91504d2721c6dbe9131ab48784cd82513126 7667e4ecd758cb80c5de2a78ae2f5f8b3ed738d2 mac <mac@macs-MacBook-Pro.local> 1777915921 +0530	commit: added gitignore
-7667e4ecd758cb80c5de2a78ae2f5f8b3ed738d2 1a569aca88a6118048479211963093d5d07d0836 mac <mac@macs-MacBook-Pro.local> 1777916155 +0530	commit: Remove virtual environment files

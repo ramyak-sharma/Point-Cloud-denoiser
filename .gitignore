@@ -19,3 +19,6 @@ DepthCamera_*.json
 DepthCapture_*.png
 ScreenCamera_*.json
 ScreenCapture_*.png
+
+# Corrupted .git from an earlier session, kept locally as a safety copy only
+.git.corrupt-backup/
