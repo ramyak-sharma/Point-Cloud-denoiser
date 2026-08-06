@@ -13,3 +13,9 @@ results/cache/
 
 # TeX build intermediates
 report/*.aux report/*.log report/*.out report/*.toc
+
+# Open3D viewer artifacts (written when saving a view from scripts/demo.py)
+DepthCamera_*.json
+DepthCapture_*.png
+ScreenCamera_*.json
+ScreenCapture_*.png

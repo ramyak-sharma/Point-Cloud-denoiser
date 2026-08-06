@@ -7,16 +7,20 @@ from pathlib import Path
 import numpy as np
 
 
-def load_bin(path: str | Path) -> np.ndarray:
-    """Load a KITTI Velodyne scan, returning an (N, 3) float32 XYZ array.
+def load_bin(path: str | Path, with_intensity: bool = False) -> np.ndarray:
+    """Load a KITTI Velodyne scan as (N, 3) XYZ, or (N, 4) XYZI.
 
-    The intensity channel is dropped: the denoising pipeline and both
-    evaluation metrics operate purely on geometry.
+    Intensity is the calibrated return strength in [0, 1]. It is a genuinely
+    discriminative channel for weather denoising — backscatter from a
+    raindrop returns far less energy than a solid surface at the same range
+    — and the recent literature (LIORNet, TripleMixer, IDSOR) relies on it.
+    It stays off by default so the geometry-only results remain reproducible.
     """
     pts = np.fromfile(str(path), dtype=np.float32)
     if pts.size % 4 != 0:
         raise ValueError(f"{path}: size {pts.size} is not a multiple of 4 floats")
-    return pts.reshape(-1, 4)[:, :3]
+    pts = pts.reshape(-1, 4)
+    return pts if with_intensity else pts[:, :3]
 
 
 def save_bin(path: str | Path, points: np.ndarray, intensity: np.ndarray | None = None) -> None:
@@ -30,6 +34,21 @@ def save_bin(path: str | Path, points: np.ndarray, intensity: np.ndarray | None 
         intensity = np.zeros(len(points), dtype=np.float32)
     out = np.hstack([points, intensity.reshape(-1, 1).astype(np.float32)])
     out.tofile(str(path))
+
+
+def previous_scan(path: str | Path) -> Path | None:
+    """Path of the preceding frame in the same drive (KITTI numeric naming).
+
+    Returns None when the frame is the first of its sequence or the file is
+    absent — callers should then skip temporal methods for that frame.
+    """
+    path = Path(path)
+    try:
+        num = int(path.stem)
+    except ValueError:
+        return None
+    prev = path.with_name(f"{num - 1:0{len(path.stem)}d}.bin")
+    return prev if prev.exists() else None
 
 
 def list_scans(directories: list[str | Path]) -> list[Path]:

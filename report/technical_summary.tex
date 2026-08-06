@@ -24,59 +24,133 @@ Thapar Institute of Engineering and Technology, Patiala}
 
 The pipeline proposed in Section~5 of the project proposal has been
 implemented in full. Raw KITTI Velodyne scans are preprocessed (NaN/Inf
-removal, 60~m range gating, 0.15~m voxel-grid downsampling), corrupted with
-the three noise families identified in the Need Analysis (Gaussian jitter,
-$\sigma=0.05$~m; uniform outliers, 8\%; fog-style near-range backscatter,
-4\%, exponentially distributed range), and denoised by \emph{both} approaches
-named in the methodology: (a) a statistical baseline chaining Statistical
-Outlier Removal ($k=20$, $\alpha=2.0$) and Radius Outlier Removal (4
-neighbours within 0.6~m), and (b) two learning-based models trained on
-paired noisy/clean patches --- a PointNet autoencoder (0.83M parameters,
-Chamfer loss) and a lightweight DGCNN (0.22M parameters) that regresses
-per-point displacements and classifies injected noise points for removal.
+removal, 60~m range gating, 0.15~m voxel-grid downsampling) and corrupted by
+a physics-based weather model: extinction follows an empirical Mie fit
+$\alpha = 0.003R^{0.6}$~m$^{-1}$ for rain rate $R$ (mm/h) at 905~nm, after
+LISA [Kilic et al., arXiv:2107.07004]. Each return is attenuated by the
+two-way transmittance $e^{-2\alpha r}$; a droplet intercepting the beam
+relocates the return to its own (nearer) range, weakly attenuated echoes
+fall below the detection threshold and are \emph{deleted}, and survivors
+receive SNR-dependent range jitter. Gaussian sensor jitter
+($\sigma=0.05$~m) and uniform outliers (8\%) are applied on top, and three
+severity presets (10/25/50~mm/h) follow the Robo3D convention
+[Kong et al., ICCV 2023].
+
+The deletion channel matters for how every result below should be read: a
+denoiser can remove spurious points and reposition jittered ones, but it
+cannot restore a return the weather destroyed. Reconstruction error
+therefore has a strictly positive floor, quantified in Section~2.
+
+Six denoisers are evaluated. Three require no training: (a) the statistical
+baseline chaining Statistical Outlier Removal ($k=20$, $\alpha=2.0$) and
+Radius Outlier Removal (4 neighbours within 0.6~m); (b) IDSOR
+[arXiv:2602.05876], which normalises the $k$-NN distance statistic by range
+so far-field structure is not eroded and then tightens the threshold for
+weak returns; and (c) a temporal-consistency filter keeping only points with
+support in the previous sweep, preceded by ICP ego-motion compensation.
+Three are learned: (d) a PointNet autoencoder (0.83M parameters, Chamfer
+loss), (e) a lightweight DGCNN (0.22M parameters) regressing per-point
+displacements and classifying injected noise, and (f) \emph{RangeRestoreNet},
+a dual-head U-Net over a $64\times2048$ range image (1.94M parameters)
+developed here, which classifies noise per pixel and predicts a bounded
+per-pixel range correction.
+
+Intensity is carried throughout. Weather backscatter returns markedly less
+energy than a solid surface at the same range --- measured here, real
+returns have median intensity 0.150 against 0.051 for injected noise --- and
+methods (b) and (f) exploit that; the earlier geometry-only pipeline
+discarded the channel entirely.
 
 \textbf{Data.} 262 scans from two public KITTI raw drives
 (2011\_09\_26, drives 0001 and 0005), split 213/26/28 into
 train/validation/test by frame. The official KITTI 3D-object Velodyne
 archive (29~GB, login-gated) was deliberately not used: the raw split
 provides identical sensor data at 490~MB, sufficient for denoising
-experiments. Training used $\sim$39{,}000 patches of 256 points; the largest
-run feasible on team hardware (Apple M1, MPS backend) was 30 epochs for the
-autoencoder and 10 for the DGCNN.
+experiments. Training used 28{,}510 patches of 256 points with 3{,}415
+held-out validation patches; on team hardware (Apple M1, MPS backend) both
+models were trained for 10 epochs, and the checkpoint retained is the one
+minimising \emph{validation} loss rather than the final epoch.
 
 \section*{2. Reconstruction Quality (Proposal Table-1 axes)}
 
-Averages over 10 held-out test frames; CD = Chamfer Distance,
-HD$_{95}$ = 95th-percentile Hausdorff (robust to single stragglers).
+Mean $\pm$ standard deviation over 10 held-out frames $\times$ 3
+independent noise draws (30 paired observations, moderate severity,
+25~mm/h). CD = Chamfer Distance, HD$_{95}$ = 95th-percentile Hausdorff.
+Every pairwise CD difference below is significant at $p < 10^{-5}$
+(Wilcoxon signed-rank over the paired observations).
 
 \begin{table}[h]
-\centering
+\centering\small
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{lccccc}
 \toprule
-\textbf{Method} & \textbf{CD (m)} & \textbf{HD$_{95}$ (m)} &
-\textbf{CD impr.} & \textbf{Retention} & \textbf{Latency}\\
+\textbf{Method} & \textbf{CD (m)} & \textbf{HD$_{95}$} &
+\textbf{Oracle gap} & \textbf{Rem. F1} & \textbf{Reten.}\\
 \midrule
-Noisy input     & 0.403 & ---   & ---    & ---    & ---\\
-SOR + ROR       & \textbf{0.095} & \textbf{0.136} & \textbf{75.5\%} & 88.6\% & \textbf{104 ms}\\
-PointNet AE     & 0.374 & 1.835 & 5.4\%  & 165.6\% & 282 ms\\
-DGCNN           & 0.162 & 0.156 & 59.1\% & 92.3\% & 3{,}011 ms\\
+Noisy input     & 0.572 $\pm$ 0.111 & ---   & 100\%  & ---   & ---\\
+\emph{Oracle (perf. removal)} & \emph{0.104 $\pm$ 0.003} & \emph{0.353} & \emph{0\%} & \emph{1.000} & \emph{68.9\%}\\
+DGCNN           & \textbf{0.111 $\pm$ 0.008} & \textbf{0.342} & \textbf{1.6\%} & 0.788 & 78.7\%\\
+IDSOR           & 0.174 $\pm$ 0.013 & 0.827 & 15.0\% & 0.665 & 81.3\%\\
+RangeRestoreNet & 0.215 $\pm$ 0.035 & 0.459 & 23.8\% & \textbf{0.814} & 65.6\%\\
+SOR + ROR       & 0.251 $\pm$ 0.020 & 1.529 & 31.5\% & 0.628 & 78.7\%\\
+Temporal + SOR  & 0.317 $\pm$ 0.035 & 2.173 & 45.5\% & 0.567 & 81.4\%\\
+PointNet AE     & 0.521 $\pm$ 0.092 & 3.353 & 89.1\% & 0.000 & 100.0\%\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The statistical baseline remains the strongest pure-reconstruction method,
+The \emph{oracle gap} column is the fraction of the \emph{recoverable}
+error a method leaves behind,
+$(\mathrm{CD}_{\text{method}}-\mathrm{CD}_{\text{oracle}})/
+(\mathrm{CD}_{\text{noisy}}-\mathrm{CD}_{\text{oracle}})$. It is reported
+because a raw Chamfer Distance is uninterpretable when 31\% of returns are
+destroyed beyond recovery: 0\% means a method matched a perfect noise
+classifier, 100\% that it achieved nothing.
+
+The oracle row is the reference point: it deletes every injected point and
+keeps every real one, and still scores CD 0.104 rather than zero, because
+the weather model destroys 31\% of returns that no denoiser can restore.
+Read against that floor, the DGCNN has closed 98\% of the recoverable gap.
+
+The DGCNN is the strongest method by a wide margin, and marginally exceeds
+the oracle on HD$_{95}$ (0.342 vs 0.353) --- a difference of 3\% on a single
+tail statistic, which should not be over-read. An earlier revision of this
+work attributed it to the DGCNN's displacement head correcting jitter the
+oracle leaves untouched; direct measurement (Section~3) shows that head
+changes point positions by 2.6\% and alters Chamfer Distance not at all, so
+that explanation does not hold.
+
+RangeRestoreNet achieves the best noise-removal F1 of any method (0.814,
+above the DGCNN's 0.788) at 40$\times$ lower latency, but a worse Chamfer
+Distance, because it is recall-heavy: it finds more of the noise and removes
+real returns along with it, retaining only 65.6\% of the cloud --- below even
+the oracle's 68.9\%.
+
+The statistical baseline remains competitive and far cheaper (Section~4),
 consistent with the literature survey's expectation that classical filters
-are highly effective against \emph{additive outlier} noise. The DGCNN
-approaches it (and matches it on HD$_{95}$) while learning the noise model
-rather than assuming it. The autoencoder under-performs: reconstructing
-patches through a global bottleneck over-smooths fine scan-line structure
-and inflates the cloud (retention $>$100\%), a known limitation of
-set-decoder architectures. An ablation over noise intensity
-($\sigma = 0.02$--$0.12$~m) shows SOR+ROR and DGCNN degrading gracefully
-and in parallel, while the AE's error is dominated by reconstruction blur
-and is insensitive to $\sigma$. Sweeping SOR parameters confirms the
-proposal's tuning discussion: tighter thresholds ($\alpha=1.0$) improve CD
-by $\sim$6\% over the default on this noise profile.
+handle additive outliers well; its weakness is recall (removal F1 0.628,
+recall 0.53), as a global distance threshold cannot separate weather
+backscatter from sparse genuine structure at range. The temporal filter
+under-performs the plain baseline here: requiring support in the previous
+sweep also discards legitimately new returns at the leading edge of the
+scene.
+
+The autoencoder under-performs on every axis: a global bottleneck
+over-smooths fine scan-line structure, and having no removal head it cannot
+delete an injected point at all (removal F1 exactly 0). Its retention of
+100\% confirms it is a pure displacement model. Section~3 shows this is far
+more damaging than its modest CD suggests.
+
+\textbf{Ablations.} Sweeping the DGCNN's outlier threshold over
+0.3--0.7 confirms the default of 0.5 sits at the CD optimum (0.113, flat
+between 0.5 and 0.6) with removal F1 peaking slightly earlier at 0.4
+(0.788); the model is not sensitive to this choice. Sweeping SOR parameters
+confirms the proposal's tuning discussion: tighter thresholds
+($\alpha=1.0$) improve CD by $\sim$6\% over the default. ICP ego-motion
+compensation improves the temporal filter from CD 0.227 to 0.177 while
+retaining 5 percentage points more of the cloud, confirming that the
+uncompensated variant was deleting static structure rather than
+backscatter.
 
 \section*{3. Downstream Detection Impact}
 
@@ -87,30 +161,83 @@ taken as reference; recall/precision of the detections on noisy and denoised
 clouds are measured against that reference (BEV centre matching, 1~m
 tolerance, score $\geq 0.4$, 10 frames).
 
+Evaluated over all 28 held-out frames $\times$ 3 noise seeds (84 paired
+observations). $p$-values are paired Wilcoxon signed-rank against the
+perfect-removal oracle.
+
 \begin{table}[h]
-\centering
-\begin{tabular}{lcc}
+\centering\small
+\begin{tabular}{lccc}
 \toprule
-\textbf{Condition} & \textbf{Consistency recall} & \textbf{Consistency precision}\\
+\textbf{Condition} & \textbf{Recall} & \textbf{Precision} & \textbf{$p$ vs oracle}\\
 \midrule
-Noisy input & 0.760 & 0.853\\
-SOR + ROR   & 0.733 & \textbf{0.975}\\
-PointNet AE & 0.067 & 0.750\\
-DGCNN       & \textbf{0.788} & 0.870\\
+Noisy input & 0.259 $\pm$ 0.231 & 0.806 & $<10^{-4}$\\
+\emph{Oracle (perfect removal)} & \emph{0.479 $\pm$ 0.325} & \emph{0.805} & ---\\
+DGCNN       & \textbf{0.452 $\pm$ 0.298} & 0.764 & 0.153 (n.s.)\\
+RangeRestoreNet & 0.403 $\pm$ 0.320 & 0.788 & $2\times10^{-4}$\\
+SOR + ROR   & 0.392 $\pm$ 0.303 & 0.737 & $<10^{-4}$\\
+Temporal + SOR & 0.389 $\pm$ 0.269 & 0.795 & ---\\
+IDSOR       & 0.368 $\pm$ 0.291 & \textbf{0.826} & $<10^{-4}$\\
+PointNet AE & 0.062 $\pm$ 0.104 & 0.773 & $<10^{-4}$\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The synthetic noise costs the detector a quarter of its detections and
-introduces spurious boxes. The two viable denoisers repair different
-failure modes: SOR+ROR almost eliminates noise-induced \emph{false} boxes
-(precision 0.85$\to$0.98) at a small recall cost, while the DGCNN recovers
-the most \emph{true} detections (recall 0.79, the best of all conditions).
-Notably, the ranking by Chamfer Distance does not predict this: the AE, only
-7\% worse than noisy on CD, is catastrophic downstream (recall 0.07). This
-directly substantiates the research gap identified in Section~3.5 of the
-proposal --- reconstruction metrics alone are an incomplete proxy for
-perception quality.
+The weather corruption costs the detector 74\% of its clean-cloud
+detections. Every denoiser recovers a significant share ($p<10^{-4}$ against
+the noisy baseline) except the autoencoder, which makes matters
+significantly worse.
+
+\textbf{Perfect removal is the ceiling.} The DGCNN is the only method
+statistically indistinguishable from the oracle; all others fall
+significantly short. This sample size matters: an earlier revision of this
+work evaluated detection on 10 frames, observed that two methods exceeded
+the oracle's mean recall, and drew the opposite conclusion. Per-frame recall
+has a standard deviation of $\approx 0.3$ about a mean of $0.4$, so at that
+sample size a gap of 0.05 between means is uninformative; at 84 paired
+observations the ordering reverses and the apparent effect disappears. The
+geometric metrics, whose between-frame variance is an order of magnitude
+smaller, did not suffer this problem --- which is precisely why the same
+sample size was wrongly assumed adequate for both.
+
+One further result deserves emphasis.
+
+\textbf{Position restoration does not contribute.} Two direct
+measurements. The DGCNN's
+displacement head changes the mean position error of surviving real points
+from 0.0804~m to only 0.0783~m, and removing the displacement entirely
+leaves Chamfer Distance unchanged (0.1158 vs 0.1157); a range-restoration
+head trained for the same purpose on the range-image model (Section~4)
+converged to predicting exactly zero. The reason is intrinsic rather than a
+training failure: weather-induced range jitter is zero-mean, so for a single
+observation the error-minimising prediction \emph{is} zero, and recovering
+it requires a surface prior over neighbouring returns that neither a
+per-point patch loss nor a per-pixel image loss supplies. Position
+restoration on this corruption is, on the present evidence, not a source of
+downstream gain.
+
+\textbf{Reconstruction error does not predict perception quality.} The
+autoencoder improves Chamfer Distance by 8.9\% relative to the noisy input
+yet destroys the detector, dropping recall from 0.259 to 0.062 --- a 76\%
+loss, $p<10^{-4}$, and the only condition that is worse than no denoising at
+all. A second, milder inversion points the same way: IDSOR achieves clearly
+better Chamfer Distance than SOR+ROR (0.174 vs 0.251) yet slightly lower
+detection recall (0.368 vs 0.392, $p=0.069$). Across all six denoisers the
+rank correlation between Chamfer Distance and detection recall is only
+$\rho=-0.60$ ($p=0.21$) --- directionally correct, statistically weak. The
+effect cannot be attributed to point-count inflation, because
+after the recombination correction of Section~6 the AE emits exactly 100\%
+of the input cardinality; it is the oversmoothing itself that removes the
+structure PointPillars relies on. The recombination ablation supplies a
+second, independent demonstration: the uncorrected variant achieves a
+\emph{better} CD (0.525 vs 0.569) while returning 232\% of the input
+points, because densifying a cloud shortens the clean$\rightarrow$denoised
+nearest-neighbour term faster than it lengthens the reverse term. Chamfer
+Distance is thus improvable both by blurring and by duplication, neither of
+which helps perception. This directly substantiates the research gap
+identified in Section~3.5 of the proposal, and motivates reporting
+retention and a downstream task metric alongside any reconstruction
+figure.
 
 \section*{4. Real-Time Feasibility (10 Hz target)}
 
@@ -119,42 +246,209 @@ patch covering, k-d tree construction included). Dynamic int8 quantisation
 was applied to the learning models as the Step-5 optimisation.
 
 \begin{center}
-\begin{tabular}{lrr}
+\begin{tabular}{lrrc}
 \toprule
-\textbf{Configuration} & \textbf{ms/frame} & \textbf{Hz}\\
+\textbf{Method} & \textbf{ms/frame} & \textbf{Hz} & \textbf{$\geq$10~Hz}\\
 \midrule
-SOR+ROR (CPU)                & 174    & 5.7\\
-PointNet AE (MPS GPU)        & 138    & 7.3\\
-PointNet AE (CPU fp32)       & 2{,}856 & 0.35\\
-PointNet AE (CPU int8)       & 2{,}898 & 0.35\\
-DGCNN (MPS GPU)              & 3{,}317 & 0.30\\
-DGCNN (CPU fp32)             & 20{,}437 & 0.05\\
+RangeRestoreNet (MPS)        & \textbf{45}    & \textbf{22.1} & \textbf{yes}\\
+IDSOR (CPU)                  & \textbf{49}    & \textbf{20.3} & \textbf{yes}\\
+SOR+ROR (CPU)                & \textbf{65}    & \textbf{15.5} & \textbf{yes}\\
+Temporal+SOR (CPU, incl. ICP)& 278    & 3.6  & no\\
+PointNet AE (MPS)            & 1{,}192 & 0.84 & no\\
+DGCNN (MPS)                  & 1{,}806 & 0.55 & no\\
+DGCNN (CPU int8)             & 11{,}593 & 0.09 & no\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-\textbf{Honest assessment: the 10~Hz target is not yet met.} The closest
-configurations are the GPU-batched autoencoder (7.3~Hz) and the statistical
-baseline (5.7~Hz, dominated by ROR's radius queries); the DGCNN's dynamic
-k-NN graph construction is the principal bottleneck (0.3~Hz). Quantisation
-reduced the AE checkpoint 3.4$\times$ (3.34$\to$0.98~MB) --- valuable for
-the proposal's embedded Raspberry Pi scenario --- but did not improve
-latency, as PyTorch's qnnpack dynamic backend accelerates only the Linear
-layers, which are not the bottleneck. The measured path to 10~Hz, left as
-future work, is (i)~SOR-only filtering (interior 90~ms of the 174~ms
-pipeline), (ii)~precomputed/voxel-hashed neighbourhoods for the DGCNN, and
+\textbf{The 10~Hz target is met, and for the first time by a learned
+model.} RangeRestoreNet runs end-to-end --- projection, inference and
+unprojection --- in 45~ms, a 40$\times$ speedup over the DGCNN. The gain
+comes entirely from the representation: a rotating LiDAR is natively a 2-D
+array of (laser channel, azimuth) samples, so projecting to a range image
+turns neighbourhood queries into array indexing and lets 2-D convolutions
+supply the context that EdgeConv had to compute by building a $k$-NN graph
+per patch. This is the change the recent literature converged on, and it is
+worth roughly two orders of magnitude.
+
+Two caveats keep the classical numbers honest. Part of SOR+ROR's headroom
+is supplied by the corruption itself: precipitation destroys 31\% of
+returns, so the cloud reaching the filter is smaller than a clear-weather
+scan, and the same pipeline is slower in good conditions --- when it is
+least needed. And all timings are measured end-to-end from a NumPy array,
+including the Open3D conversion that earlier revisions excluded from the
+baseline's timer.
+
+The accuracy/latency trade-off is therefore genuine but no longer stark: the
+DGCNN buys the lowest Chamfer error (oracle gap 1.6\%) at 40$\times$ the
+cost of RangeRestoreNet, which in turn achieves the best noise-removal F1
+of any method and recovers more detection recall than either statistical
+filter. Dynamic int8 quantisation reduced the AE checkpoint 3.4$\times$
+(3.34$\to$0.98~MB), valuable for the proposal's embedded Raspberry~Pi
+scenario, but did not improve latency: PyTorch's dynamic backend accelerates
+Linear layers, whereas the bottleneck is the $k$-NN gather and patch
+assembly.
+
+Dynamic int8 quantisation reduced the AE checkpoint 3.4$\times$
+(3.34$\to$0.98~MB), valuable for the proposal's embedded Raspberry~Pi
+scenario, but did not improve latency: PyTorch's dynamic backend
+accelerates Linear layers, whereas the bottleneck is the k-NN gather and
+patch assembly. The measured path to real-time learned denoising is
+therefore (i)~voxel-hashed or precomputed neighbourhoods rather than
+per-patch k-d tree queries, (ii)~a fused batched gather kernel, and
 (iii)~CUDA-class hardware, on which the batched models have substantial
 headroom.
 
-\section*{5. Deliverables and Scope Notes}
+\section*{5. Supervision Without Ground Truth}
 
+Every learned denoiser above is trained on the noise labels emitted by the
+corruption model itself --- information no deployed system possesses, and
+which cannot be obtained from real data, since the same scene cannot be
+recorded simultaneously with and without rain. Whether the approach survives
+without those labels is therefore the decisive question for its practical
+relevance, and it is tested directly here.
+
+Following LIORNet [arXiv:2603.19936], per-point pseudo-labels are derived
+from the physics of a weather return using only a single corrupted scan:
+(i)~a \emph{range-conditioned intensity anomaly} --- received power falls as
+$\rho/r^2$, so the median intensity is estimated per range bin from the scan
+itself and a return is anomalous only relative to its own range, a global
+threshold would merely relabel ``far'' as ``noise''; (ii)~\emph{neighbourhood
+range coherence} --- a real surface is continuous in the range image whereas
+a droplet floats in front of what it occluded; and (iii)~\emph{edge
+protection} --- genuine silhouettes also produce discontinuities, but
+coherent ones persisting across adjacent pixels. LIORNet's fourth rule uses
+zero-reflectivity, which Ouster sensors report and the KITTI HDL-64E does
+not, so it is omitted rather than approximated. The restoration head is
+disabled in this configuration: its target is the clean range of a known
+source point, which is ground truth by construction.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Variant} & \textbf{CD (m)} & \textbf{HD$_{95}$} & \textbf{Removal F1} & \textbf{Reten.}\\
+\midrule
+Pseudo-label rules alone (no network) & 0.465 & 3.297 & 0.484 & 70.5\%\\
+Self-supervised network & 0.436 & 2.564 & 0.491 & 67.7\%\\
+Supervised network & \textbf{0.227} & \textbf{0.460} & \textbf{0.813} & 65.3\%\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The pseudo-labels themselves score precision 0.500 / recall 0.470 / F1 0.484
+against the true labels: roughly half of what the self-supervised model is
+told is wrong. Trained on them, the network reaches 60\% of the supervised
+model's removal F1 --- but essentially all of that is supplied by the rules
+rather than by learning, since the network moves F1 only from 0.484 to 0.491
+($+1.4\%$ relative). It reproduced its supervision instead of generalising
+past it, and reporting the ratio to the supervised model alone would credit
+the network for what three physical heuristics already deliver.
+
+Learning does help in one respect: HD$_{95}$ improves from 3.297 to 2.564
+(22\%) and CD from 0.465 to 0.436, so the network is better than the rules
+at catching the most damaging surviving outliers even though its average
+classification accuracy is not.
+
+\textbf{This is a negative result for self-supervision as implemented, and a
+useful one:} the gap between F1 0.49 and 0.81 measures exactly what
+knowledge of the ground truth is worth on this task, and no additional
+training on these rules closes it. The prerequisite for progress is better
+pseudo-labels --- multi-echo returns, temporal consistency across successive
+sweeps, or the reflectivity channel this sensor does not provide --- not
+longer training.
+
+\section*{6. Experimental Validity}
+
+\textbf{Protocol.} Every method is run on the \emph{identical} noisy cloud
+for a given (frame, seed) pair, over three independent noise draws across
+ten held-out frames. Results are therefore paired, and each ranking claim
+is supported by a Wilcoxon signed-rank test over the 30 paired observations
+(recorded in \texttt{results/metrics\_summary.json}); dispersion is reported
+as a standard deviation alongside every mean. Reconstruction quality is
+reported as Chamfer Distance and HD$_{95}$; strict Hausdorff is retained
+only in the raw output, because as the maximum over all residual points it
+is pinned near 30~m for every method by a single survivor at the range gate
+and consequently ranks nothing. Because geometric error alone cannot
+distinguish removing noise from displacing everything slightly, methods
+that yield an index set into the noisy cloud (both filters, and the DGCNN
+via its outlier head) additionally report noise-removal precision, recall
+and F1 against the ground-truth injection labels.
+
+\textbf{Corrections applied during review.} Six defects affecting reported
+numbers were identified and fixed; they are recorded here because several
+bear directly on the conclusions.
+
+\begin{enumerate}\setlength{\itemsep}{2pt}
+\item \emph{Autoencoder patch recombination.} The AE's unordered
+reconstructions were concatenated across overlapping patches and
+voxel-downsampled, returning 165\% of the input point count --- inflating
+its Chamfer term from the denoised side and presenting the detector with a
+cloud of the wrong density. Each input point now adopts its nearest
+reconstructed point within its own patch, averaged across overlaps, giving
+output cardinality equal to input and a like-for-like comparison with the
+DGCNN.
+\item \emph{Autoencoder training target.} The Chamfer target was the
+nearest-clean-point projection of \emph{every} noisy point, outliers
+included, so roughly 15\% of the target set consisted of surface points
+duplicated wherever outliers happened to fall. The target is now a genuine
+clean patch gathered about the patch centroid.
+\item \emph{Temporal filter ego-motion.} Inter-sweep translation was assumed
+negligible against the 0.5~m consistency radius. Measured by ICP over these
+drives it averages 0.56~m and reaches 0.94~m (3--9~m/s), exceeding the
+radius on half of all frames; uncompensated, the filter deletes static
+structure rather than backscatter. Registration now precedes the
+consistency test.
+\item \emph{Patch coverage.} Randomly seeded patch centres left 2{,}147 of
+36{,}033 points (6\%) outside every patch on a representative frame. Such
+points retained an outlier probability of zero and could never be removed,
+capping the DGCNN's removal recall independently of classifier quality.
+Coverage is now completed greedily, at a cost of 27\% more patches
+(+38~ms/frame) --- a latency regression accepted deliberately.
+\item \emph{Filter timing.} SOR and ROR started their timers after the
+NumPy-to-Open3D conversion while the learned methods were timed end-to-end,
+flattering the baseline in the latency comparison. All methods are now
+timed end-to-end from a NumPy array.
+\item \emph{Degenerate frames.} An aggressive filter can empty a sparse
+frame; the metrics returned infinity, which propagated silently into
+averaged tables. Such frames now yield NaN, are excluded from means, and
+are counted explicitly in the results table.
+\end{enumerate}
+
+Corrections (1) and (2) bear on the project's central claim that Chamfer
+Distance is a poor proxy for downstream detection quality, since that claim
+rested largely on the autoencoder's collapse and the autoencoder was
+handicapped by two defects unrelated to its architecture. Section~3 reports
+the claim as re-measured after the fixes.
+
+\textbf{Remaining limitations.} The noise is synthetic: the LISA model is
+a physically motivated approximation, not measured adverse-weather data,
+and validation on a real corrupted dataset (e.g. STF or the Canadian
+Adverse Driving Conditions set) remains the natural next step. The
+detection-consistency protocol measures agreement with the detector's own
+clean-cloud output rather than ground truth, so it bounds recoverable
+performance without certifying absolute accuracy. The intensity channel is
+zero-filled before detection. Finally, both learned models were trained for
+10 epochs on laptop hardware; the DGCNN's validation loss was still
+decreasing slowly at that point, so its results should be read as a floor
+on what the architecture achieves rather than a converged ceiling.
+
+\section*{7. Deliverables and Scope Notes}
+
+\begin{sloppypar}
 The repository contains the modular pipeline
 (\texttt{src/lidar\_denoise/}), a YAML-configured driver
 (\texttt{scripts/run\_pipeline.py}), the detection evaluation
 (\texttt{scripts/detection\_eval.py}), an interactive before/after demo
-(\texttt{scripts/demo.py}), 14 unit tests, all metrics/plots under
-\texttt{results/}, and the corrected proposal source. The YDLIDAR~X2 /
-Raspberry~Pi live-capture component of the proposal is hardware-dependent
-and deferred; the pipeline is sensor-agnostic and accepts any $(N,3)$ scan.
+(\texttt{scripts/demo.py}), and 23 unit tests covering preprocessing,
+the weather-model physics, the filters, ego-motion registration, the
+metrics and degenerate-input handling. All metrics and plots are written
+under \texttt{results/}, alongside the corrected proposal source.
+\end{sloppypar}
+
+The YDLIDAR~X2 and Raspberry~Pi live-capture component of the proposal is
+hardware-dependent and remains deferred; the pipeline is sensor-agnostic
+and accepts any $(N,3)$ scan, so a driver for that sensor can replace the
+KITTI reader without further changes.
 
 \end{document}

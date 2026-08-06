@@ -68,7 +68,7 @@ def main() -> None:
         ckpt = ckpt_dir / f"{name}.pt"
         if ckpt.exists():
             model, _ = load_checkpoint(name, ckpt, device)
-            clouds[name], _ = denoise_cloud(model, name, noisy.points, cfg, device)
+            clouds[name], _, _ = denoise_cloud(model, name, noisy.points, cfg, device)
 
     print(f"\n{'method':14s} {'points':>9s} {'CD (m)':>9s} {'HD (m)':>9s}")
     for name, pts in clouds.items():
