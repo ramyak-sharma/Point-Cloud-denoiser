@@ -54,7 +54,6 @@ tests/test_core.py         35 unit tests: preprocessing, weather physics,
 results/                   metrics tables (json/md), plots, checkpoints, logs
 report/proposal.tex        recreated proposal source (citations fixed) + PDF
 report/final_report.*      full technical report with figures (PDF built)
-report/viva_qna.*          examiner question bank + number sheet (PDF built)
 report/figures/            all report figures (scripts/make_figures.py)
 report/technical_summary.* earlier condensed write-up
 prototype.py               the original single-file prototype (kept for reference)

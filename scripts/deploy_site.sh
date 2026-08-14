@@ -11,7 +11,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 STAGE="$(mktemp -d)"
 
 cp -R "$ROOT/site/." "$STAGE/"
-cp "$ROOT/report/final_report.pdf" "$ROOT/report/viva_qna.pdf" "$STAGE/assets/" 2>/dev/null || true
+cp "$ROOT/report/final_report.pdf" "$STAGE/assets/" 2>/dev/null || true
 touch "$STAGE/.nojekyll"   # keep Pages from eating files that start with _
 
 cd "$STAGE"
