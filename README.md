@@ -15,10 +15,6 @@ Three of the six were added after a survey of the 2024–2026 literature:
 only method that meets the 10 Hz target while learning), and a
 **self-supervised** variant trained without any ground-truth labels.
 
-> **New to this project?** Read **[EXPLAINER.md](EXPLAINER.md)** first. It
-> explains the whole thing from scratch in plain language, with no background
-> assumed, in about ten minutes.
-
 ## Repository layout
 
 ```
@@ -60,7 +56,6 @@ report/proposal.tex        recreated proposal source (citations fixed) + PDF
 report/final_report.*      full technical report with figures (PDF built)
 report/figures/            all report figures (scripts/make_figures.py)
 report/technical_summary.* earlier condensed write-up
-EXPLAINER.md               plain-language explainer, no background needed
 prototype.py               the original single-file prototype (kept for reference)
 data/                      5 sample KITTI scans (repo) + data/raw/ (downloaded)
 ```

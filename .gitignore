@@ -22,3 +22,8 @@ ScreenCapture_*.png
 
 # Corrupted .git from an earlier session, kept locally as a safety copy only
 .git.corrupt-backup/
+
+# Internal interview-prep explainer: kept on disk only, never committed and
+# never deployed, so it cannot reach the public showcase site by accident.
+EXPLAINER.md
+EXPLAINER.pdf
