@@ -146,7 +146,7 @@ function initExplorer(manifest) {
     }
 
     const rain = SEVERITIES.find((s) => s[0] === state.sev)[2];
-    hint.textContent = `${rain} — the model destroys ${
+    hint.textContent = `${rain}. The model destroys ${
       (100 - S.metrics.oracle.retention_pct).toFixed(0)}% of returns outright at this severity.`;
 
     overlay.innerHTML = `<b>${methodItems.find((m) => m[0] === state.method)[1]}</b><br>` +
@@ -297,7 +297,7 @@ function initTuner() {
     });
 
     overlay.innerHTML =
-      `<b>${FILTER_DEFS[current].label}</b> — computed live<br>` +
+      `<b>${FILTER_DEFS[current].label}</b>, computed live<br>` +
       `<span style="color:#3987e5">■</span> real kept &nbsp;` +
       `<span style="color:#e66767">■</span> noise kept &nbsp;` +
       `<span style="color:#8a3a3a">■</span> removed`;
@@ -314,7 +314,7 @@ function initTuner() {
       ? `Recomputed in ${ms.toFixed(0)} ms on ${noisy.n.toLocaleString()} points ` +
         `(${lastKnnMs.toFixed(0)} ms of it rebuilding the k-NN graph), in your browser.`
       : `Recomputed in ${ms.toFixed(0)} ms on ${noisy.n.toLocaleString()} points, ` +
-        `reusing the cached k-NN graph — change k to force a rebuild.`;
+        `reusing the cached k-NN graph. Change k to force a rebuild.`;
   }
 
   document.getElementById('btn-tune-reset').addEventListener('click', () => viewer.resetView());
@@ -392,8 +392,8 @@ function initDashboard(metrics, detection, ablations) {
       x: M['noisy (no denoising)'].cd, y: D.noisy.recall,
       label: 'Corrupted input', align: 'right', colour: C.muted,
     }],
-    { xLabel: 'Chamfer Distance (m) — lower is better',
-      yLabel: 'detection recall — higher is better' });
+    { xLabel: 'Chamfer Distance (m), lower is better',
+      yLabel: 'detection recall, higher is better' });
 
   const lat = ORDER.filter((n) => has(n) && M[n].time_ms > 0);
   barChart(document.getElementById('chart-latency'),
@@ -454,7 +454,7 @@ function canvasFallback(id, message) {
     loading.innerHTML = `<p style="color:#e66767;max-width:40ch;text-align:center">
       Could not load the point-cloud data.<br><code>${err.message}</code><br><br>
       <span style="color:#868b94">If you opened this page from the file system, serve it over
-      HTTP instead — browsers block <code>fetch</code> on <code>file://</code>.</span></p>`;
+      HTTP instead, because browsers block <code>fetch</code> on <code>file://</code>.</span></p>`;
     return;
   }
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LiDAR Denoising in Adverse Weather — Capstone CPG No. 5</title>
+<title>LiDAR Denoising in Adverse Weather · Capstone CPG No. 5</title>
 <meta name="description" content="Interactive showcase of a LiDAR point-cloud denoising capstone: six methods compared on physics-simulated rain, with a live 3D explorer and real filters running in your browser.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌧️</text></svg>">
 <link rel="stylesheet" href="css/style.css">
@@ -37,18 +37,18 @@
          copy-width, so the seam never shows and the loop is continuous -->
     <div class="credits-track">
       <ul class="credits-list">
-        <li>Jayantika</li>
-        <li>Krish Agarwal</li>
-        <li>Ramyak Sharma</li>
-        <li>Shardool Dhodawat</li>
-        <li>Siddant Singh</li>
+        <li><img src="img/jayantika.png" alt="" width="192" height="192" loading="lazy" decoding="async"><span>Jayantika</span></li>
+        <li><img src="img/krish.png" alt="" width="192" height="192" loading="lazy" decoding="async"><span>Krish Agarwal</span></li>
+        <li><img src="img/ramyak.png" alt="" width="192" height="192" loading="lazy" decoding="async"><span>Ramyak Sharma</span></li>
+        <li><img src="img/shardool.svg" alt="" width="192" height="192" loading="lazy" decoding="async"><span>Shardool Dhodawat</span></li>
+        <li><img src="img/siddant.png" alt="" width="192" height="192" loading="lazy" decoding="async"><span>Siddant Singh</span></li>
       </ul>
       <ul class="credits-list" aria-hidden="true">
-        <li>Jayantika</li>
-        <li>Krish Agarwal</li>
-        <li>Ramyak Sharma</li>
-        <li>Shardool Dhodawat</li>
-        <li>Siddant Singh</li>
+        <li><img src="img/jayantika.png" alt="" width="192" height="192" loading="lazy" decoding="async"><span>Jayantika</span></li>
+        <li><img src="img/krish.png" alt="" width="192" height="192" loading="lazy" decoding="async"><span>Krish Agarwal</span></li>
+        <li><img src="img/ramyak.png" alt="" width="192" height="192" loading="lazy" decoding="async"><span>Ramyak Sharma</span></li>
+        <li><img src="img/shardool.svg" alt="" width="192" height="192" loading="lazy" decoding="async"><span>Shardool Dhodawat</span></li>
+        <li><img src="img/siddant.png" alt="" width="192" height="192" loading="lazy" decoding="async"><span>Siddant Singh</span></li>
       </ul>
     </div>
   </div>
@@ -64,7 +64,7 @@
         Rain corrupts a LiDAR scan two ways at once: droplets create phantom
         points in mid-air, and attenuation destroys distant returns outright.
         We built six denoisers, and measured them not by how good the point
-        cloud <em>looks</em> — but by whether a 3D object detector could still
+        cloud <em>looks</em>, but by whether a 3D object detector could still
         find the cars.
       </p>
       <div class="hero-actions">
@@ -183,8 +183,8 @@
     <div class="note">
       <strong>Why only these three?</strong> SOR, ROR and IDSOR are geometric
       procedures with no learned weights, so they can honestly run live. The
-      three neural models cannot — PyTorch does not run in a browser — so their
-      outputs in the explorer above are precomputed on the same frame.
+      three neural models cannot, because PyTorch does not run in a browser,
+      so their outputs in the explorer above are precomputed on the same frame.
     </div>
   </div>
 </section>
@@ -203,7 +203,7 @@
       <article class="card">
         <h3>Reconstruction error</h3>
         <p class="card-note">
-          Read against the <em>oracle</em> — a perfect noise classifier. It
+          Read against the <em>oracle</em>, a perfect noise classifier. It
           scores 0.104 m, not zero, because rain destroyed 31% of returns that
           nothing can recover.
         </p>
@@ -232,7 +232,7 @@
         <h3>Noise identification</h3>
         <p class="card-note">
           Precision, recall and F1 against ground-truth labels. The autoencoder
-          scores zero — it has no removal head at all.
+          scores zero, because it has no removal head at all.
         </p>
         <div class="chart" id="chart-prf"></div>
       </article>
@@ -291,9 +291,9 @@
         <p>
           The PointNet autoencoder <b>improves</b> reconstruction error by 8.9%
           while destroying <b>76% of the detector's recall</b>
-          (p&nbsp;&lt;&nbsp;0.0001) — the only method worse than doing nothing.
-          It smooths scan-line structure into a surface the detector cannot
-          parse, and the metric rewards it.
+          (p&nbsp;&lt;&nbsp;0.0001). It is the only method worse than doing
+          nothing: it smooths scan-line structure into a surface the detector
+          cannot parse, and the metric rewards it.
         </p>
         <p class="finding-more">
           A second proof: our buggy patch-recombination scored a <em>better</em>
@@ -307,7 +307,7 @@
         <h3>Real time needs a different representation</h3>
         <p>
           Moving from a k-NN graph to a 64&times;2048 range image gave a
-          <b>40&times; speedup</b> — 45 ms versus 1,806 ms — with the best
+          <b>40&times; speedup</b>, 45 ms versus 1,806 ms, with the best
           noise-removal F1 of any method (0.814). A rotating LiDAR already
           <em>is</em> a 2-D array; recovering that topology makes convolution
           possible.
@@ -336,7 +336,7 @@
         <p>
           Trained on physics-derived pseudo-labels instead of ground truth, the
           network reached F1 0.491 against pseudo-labels that already scored
-          0.484 alone — a <b>+1.4%</b> gain. It imitated its supervision rather
+          0.484 alone, a <b>+1.4%</b> gain. It imitated its supervision rather
           than surpassing it.
         </p>
         <p class="finding-more">
@@ -370,7 +370,7 @@
         <h3>1 · Data</h3>
         <p>
           262 KITTI raw scans, split 213/26/28 by frame. The raw split has no
-          ground-truth 3D boxes — which is why detection is measured by
+          ground-truth 3D boxes, which is why detection is measured by
           <em>consistency</em> against the detector's own clean-cloud output
           rather than absolute mAP.
         </p>
@@ -397,7 +397,7 @@
         <p>
           Every method sees the <em>identical</em> corrupted cloud per (frame,
           seed), so results are paired. Reconstruction, noise-removal F1,
-          retention, downstream detection and latency — because they disagree.
+          retention, downstream detection and latency, because they disagree.
         </p>
       </div>
     </div>
@@ -407,9 +407,9 @@
       <ul>
         <li><b>The noise is synthetic.</b> Physically motivated, but not measured rain. Validation on STF / CADC / WADS is the next step and has not been done.</li>
         <li><b>Detection is consistency, not accuracy.</b> It bounds recoverable performance; it is not mAP.</li>
-        <li><b>The dataset is small</b> — 262 scans from two drives of one urban daytime session.</li>
+        <li><b>The dataset is small:</b> 262 scans from two drives of one urban daytime session.</li>
         <li><b>Models are not converged.</b> The DGCNN's validation loss was still falling at epoch 10.</li>
-        <li><b>The hardware component is deferred</b> — the proposal's YDLIDAR X2 capture needs the physical sensor.</li>
+        <li><b>The hardware component is deferred:</b> the proposal's YDLIDAR X2 capture needs the physical sensor.</li>
       </ul>
     </div>
   </div>

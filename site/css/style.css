@@ -111,10 +111,18 @@ b, strong { color: var(--ink); font-weight: 640; }
   justify-content: space-around;
 }
 .credits-list li {
-  padding: 11px 34px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 30px;
   font-size: .93rem; font-weight: 560; letter-spacing: .01em;
   color: var(--ink-2);
   white-space: nowrap;
+}
+.credits-list img {
+  width: 30px; height: 30px; border-radius: 50%;
+  object-fit: cover; flex-shrink: 0;
+  /* a hairline ring so a dark-haired crop never bleeds into the dark rail */
+  box-shadow: 0 0 0 1px var(--line);
+  background: #33333c;   /* matches the baked-in backdrop while loading */
 }
 /* separator dot between names */
 .credits-list li + li { position: relative; }
