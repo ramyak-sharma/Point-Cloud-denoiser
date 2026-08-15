@@ -247,8 +247,8 @@ def fig_cd_vs_detection(m, d):
     # for it that does not collide, and both axis labels already state their
     # direction. Chart junk that fights the data loses.
 
-    ax.set_xlabel("Chamfer Distance (m) — lower is better")
-    ax.set_ylabel("detection recall — higher is better")
+    ax.set_xlabel("Chamfer Distance (m), lower is better")
+    ax.set_ylabel("detection recall, higher is better")
     ax.set_title("Reconstruction error does not predict perception quality",
                  loc="left", color=INK)
     ax.grid(True)
@@ -280,8 +280,8 @@ def fig_latency(m):
         ax.annotate(f"  {PRETTY[n]}  ", (x, y), fontsize=8, color=INK_2,
                     ha=ha, va="bottom")
     ax.set_xscale("log")
-    ax.set_xlabel("latency per frame (ms, log scale) — lower is better")
-    ax.set_ylabel("oracle gap (%) — lower is better")
+    ax.set_xlabel("latency per frame (ms, log scale), lower is better")
+    ax.set_ylabel("oracle gap (%), lower is better")
     ax.set_title("Accuracy against cost; shaded region meets the 10 Hz target",
                  loc="left", color=INK)
     ax.grid(True)
