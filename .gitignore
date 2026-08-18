@@ -27,3 +27,5 @@ ScreenCapture_*.png
 # never deployed, so it cannot reach the public showcase site by accident.
 EXPLAINER.md
 EXPLAINER.pdf
+report/viva_qna.tex
+report/viva_qna.pdf
