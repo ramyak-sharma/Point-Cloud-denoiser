@@ -340,13 +340,6 @@ input[type=range]::-moz-range-thumb {
   text-transform: uppercase; }
 .method-step p { font-size: .89rem; color: var(--ink-2); margin: 0; }
 
-.limits {
-  background: var(--surface); border: 1px solid var(--line);
-  border-radius: var(--radius); padding: 22px 26px;
-}
-.limits h3 { margin-bottom: 12px; }
-.limits ul { margin: 0; padding-left: 20px; }
-.limits li { font-size: .89rem; color: var(--ink-2); margin-bottom: 8px; }
 
 /* ── footer ──────────────────────────────────────────────────────────── */
 .footer { border-top: 1px solid var(--line); padding: 34px 0 46px; background: var(--bg-alt); }

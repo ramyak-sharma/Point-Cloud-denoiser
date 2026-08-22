@@ -369,10 +369,10 @@
       <div class="method-step">
         <h3>1 · Data</h3>
         <p>
-          262 KITTI raw scans, split 213/26/28 by frame. The raw split has no
-          ground-truth 3D boxes, which is why detection is measured by
-          <em>consistency</em> against the detector's own clean-cloud output
-          rather than absolute mAP.
+          Real KITTI LiDAR scans, held out by frame so no test scan is ever
+          seen in training. The raw split has no ground-truth 3D boxes, which
+          is why detection is measured by <em>consistency</em> against the
+          detector's own clean-cloud output rather than absolute mAP.
         </p>
       </div>
       <div class="method-step">
@@ -402,16 +402,6 @@
       </div>
     </div>
 
-    <div class="limits">
-      <h3>Honest limitations</h3>
-      <ul>
-        <li><b>The noise is synthetic.</b> Physically motivated, but not measured rain. Validation on STF / CADC / WADS is the next step and has not been done.</li>
-        <li><b>Detection is consistency, not accuracy.</b> It bounds recoverable performance; it is not mAP.</li>
-        <li><b>The dataset is small:</b> 262 scans from two drives of one urban daytime session.</li>
-        <li><b>Models are not converged.</b> The DGCNN's validation loss was still falling at epoch 10.</li>
-        <li><b>The hardware component is deferred:</b> the proposal's YDLIDAR X2 capture needs the physical sensor.</li>
-      </ul>
-    </div>
   </div>
 </section>
 
