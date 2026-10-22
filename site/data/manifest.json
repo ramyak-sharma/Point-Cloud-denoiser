@@ -1,0 +1,270 @@
+{
+ "frame": "0000000035.bin",
+ "severities": {
+  "light": {
+   "clouds": {
+    "clean": {
+     "n": 16000,
+     "scale": 100.0,
+     "intensity": true
+    },
+    "noisy": {
+     "n": 16000,
+     "scale": 100.0,
+     "intensity": true,
+     "label": true
+    },
+    "SOR+ROR": {
+     "keep_indices": true,
+     "n": 13964
+    },
+    "IDSOR": {
+     "keep_indices": true,
+     "n": 13510
+    },
+    "DGCNN": {
+     "n": 16000,
+     "scale": 100.0
+    },
+    "PointNet-AE": {
+     "n": 16000,
+     "scale": 100.0
+    },
+    "RangeRestoreNet": {
+     "n": 16000,
+     "scale": 100.0
+    }
+   },
+   "metrics": {
+    "SOR+ROR": {
+     "cd": 0.10675260185510978,
+     "retention_pct": 87.44225788363461,
+     "removal_precision": 0.6916861577716351,
+     "removal_recall": 0.4700187834128016,
+     "removal_f1": 0.5597040605643496
+    },
+    "IDSOR": {
+     "cd": 0.13139590026808606,
+     "retention_pct": 84.50241649088142,
+     "removal_precision": 0.6638525155065472,
+     "removal_recall": 0.556711457881809,
+     "removal_f1": 0.6055795677799607
+    },
+    "DGCNN": {
+     "cd": 0.061677196677905104,
+     "retention_pct": 90.31534538463592,
+     "time_ms": 2347.5308750057593,
+     "removal_precision": 0.948993658671078,
+     "removal_recall": 0.4973269758705389,
+     "removal_f1": 0.652635570724308
+    },
+    "PointNet-AE": {
+     "cd": 0.37055441890668805,
+     "retention_pct": 100.0,
+     "time_ms": 1192.6827920251526,
+     "removal_precision": 0.0,
+     "removal_recall": 0.0,
+     "removal_f1": 0.0
+    },
+    "RangeRestoreNet": {
+     "cd": 0.15083815989839022,
+     "retention_pct": 80.52388454246882,
+     "time_ms": 98.02724997280166,
+     "removal_precision": 0.7072936660268714,
+     "removal_recall": 0.7454125126426817,
+     "removal_f1": 0.7258529722124516
+    },
+    "noisy": {
+     "cd": 0.26176863481537044,
+     "retention_pct": 100.0
+    },
+    "oracle": {
+     "cd": 0.05390127171365507,
+     "retention_pct": 81.51985260740702,
+     "removal_precision": 1.0,
+     "removal_recall": 1.0,
+     "removal_f1": 1.0
+    }
+   },
+   "n_full": 37451,
+   "rain_rate": 10.0
+  },
+  "moderate": {
+   "clouds": {
+    "clean": {
+     "n": 16000,
+     "scale": 100.0,
+     "intensity": true
+    },
+    "noisy": {
+     "n": 16000,
+     "scale": 100.0,
+     "intensity": true,
+     "label": true
+    },
+    "SOR+ROR": {
+     "keep_indices": true,
+     "n": 12697
+    },
+    "IDSOR": {
+     "keep_indices": true,
+     "n": 12102
+    },
+    "DGCNN": {
+     "n": 16000,
+     "scale": 100.0
+    },
+    "PointNet-AE": {
+     "n": 16000,
+     "scale": 100.0
+    },
+    "RangeRestoreNet": {
+     "n": 16000,
+     "scale": 100.0
+    }
+   },
+   "metrics": {
+    "SOR+ROR": {
+     "cd": 0.22754676635323504,
+     "retention_pct": 79.30840911642528,
+     "removal_precision": 0.7761801410743353,
+     "removal_recall": 0.5178749208073129,
+     "removal_f1": 0.6212474892785408
+    },
+    "IDSOR": {
+     "cd": 0.20476555143473663,
+     "retention_pct": 75.70730885820142,
+     "removal_precision": 0.8080878105141537,
+     "removal_recall": 0.6329984613992217,
+     "removal_f1": 0.7099066179455948
+    },
+    "DGCNN": {
+     "cd": 0.1257701441520641,
+     "retention_pct": 79.58908723475918,
+     "time_ms": 1834.6432080143131,
+     "removal_precision": 0.9702970297029703,
+     "removal_recall": 0.6386098289437958,
+     "removal_f1": 0.7702636318978222
+    },
+    "PointNet-AE": {
+     "cd": 0.5752445410604352,
+     "retention_pct": 100.0,
+     "time_ms": 1055.9793750289828,
+     "removal_precision": 0.0,
+     "removal_recall": 0.0,
+     "removal_f1": 0.0
+    },
+    "RangeRestoreNet": {
+     "cd": 0.29301342364292515,
+     "retention_pct": 66.84349388121701,
+     "time_ms": 43.55962498812005,
+     "removal_precision": 0.7760941335816474,
+     "removal_recall": 0.8297583491718707,
+     "removal_f1": 0.8020295687166478
+    },
+    "noisy": {
+     "cd": 0.5495094682569487,
+     "retention_pct": 100.0
+    },
+    "oracle": {
+     "cd": 0.10187459214585545,
+     "retention_pct": 68.98787470528798,
+     "removal_precision": 1.0,
+     "removal_recall": 1.0,
+     "removal_f1": 1.0
+    }
+   },
+   "n_full": 35628,
+   "rain_rate": 25.0
+  },
+  "heavy": {
+   "clouds": {
+    "clean": {
+     "n": 16000,
+     "scale": 100.0,
+     "intensity": true
+    },
+    "noisy": {
+     "n": 16000,
+     "scale": 100.0,
+     "intensity": true,
+     "label": true
+    },
+    "SOR+ROR": {
+     "keep_indices": true,
+     "n": 11690
+    },
+    "IDSOR": {
+     "keep_indices": true,
+     "n": 11153
+    },
+    "DGCNN": {
+     "n": 16000,
+     "scale": 100.0
+    },
+    "PointNet-AE": {
+     "n": 16000,
+     "scale": 100.0
+    },
+    "RangeRestoreNet": {
+     "n": 16000,
+     "scale": 100.0
+    }
+   },
+   "metrics": {
+    "SOR+ROR": {
+     "cd": 0.4689296547192071,
+     "retention_pct": 72.84958735324886,
+     "removal_precision": 0.814513539548325,
+     "removal_recall": 0.5153731545442232,
+     "removal_f1": 0.6312995147040524
+    },
+    "IDSOR": {
+     "cd": 0.4135381006244453,
+     "retention_pct": 69.60653260490527,
+     "removal_precision": 0.8509417726360072,
+     "removal_recall": 0.6027360151699851,
+     "removal_f1": 0.705649157581764
+    },
+    "DGCNN": {
+     "cd": 0.2019911816319107,
+     "retention_pct": 67.48517958851563,
+     "time_ms": 1715.8998340019025,
+     "removal_precision": 0.9699705067476986,
+     "removal_recall": 0.7349993227685223,
+     "removal_f1": 0.83629358505105
+    },
+    "PointNet-AE": {
+     "cd": 0.827676554380153,
+     "retention_pct": 100.0,
+     "time_ms": 994.1460000118241,
+     "removal_precision": 0.0,
+     "removal_recall": 0.0,
+     "removal_f1": 0.0
+    },
+    "RangeRestoreNet": {
+     "cd": 0.4134362518579158,
+     "retention_pct": 54.074160176682554,
+     "time_ms": 43.48549997666851,
+     "removal_precision": 0.7941660339154645,
+     "removal_recall": 0.8499932276852228,
+     "removal_f1": 0.8211318285901211
+    },
+    "noisy": {
+     "cd": 0.8389476172461461,
+     "retention_pct": 100.0
+    },
+    "oracle": {
+     "cd": 0.1437113534060604,
+     "retention_pct": 57.09054980820644,
+     "removal_precision": 1.0,
+     "removal_recall": 1.0,
+     "removal_f1": 1.0
+    }
+   },
+   "n_full": 34412,
+   "rain_rate": 50.0
+  }
+ },
+ "max_points": 16000
+}

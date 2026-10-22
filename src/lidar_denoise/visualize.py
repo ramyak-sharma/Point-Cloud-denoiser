@@ -82,16 +82,24 @@ def ablation_lines(
 
 
 def training_curve(csv_path: Path, out_path: Path, title: str) -> None:
-    """Loss-vs-epoch curve from a training CSV log."""
+    """Loss-vs-epoch curve from a training CSV log (train + validation)."""
     import csv as _csv
 
-    epochs, losses = [], []
+    epochs, losses, val_losses = [], [], []
     with open(csv_path) as f:
         for row in _csv.DictReader(f):
             epochs.append(int(row["epoch"])); losses.append(float(row["loss"]))
+            val_losses.append(float(row.get("val_loss") or "nan"))
     fig, ax = plt.subplots(figsize=(5, 3))
-    ax.plot(epochs, losses)
-    ax.set_xlabel("epoch"); ax.set_ylabel("training loss")
+    ax.plot(epochs, losses, label="train")
+    if np.isfinite(val_losses).any():
+        ax.plot(epochs, val_losses, label="validation", linestyle="--")
+        best = int(np.nanargmin(val_losses))
+        ax.axvline(epochs[best], color="grey", lw=0.8, alpha=0.7)
+        ax.annotate(f"best (epoch {epochs[best]})", (epochs[best], val_losses[best]),
+                    fontsize=7, xytext=(3, 6), textcoords="offset points")
+        ax.legend(fontsize=8)
+    ax.set_xlabel("epoch"); ax.set_ylabel("loss")
     ax.set_title(title, fontsize=10)
     ax.grid(alpha=0.3)
     fig.tight_layout()

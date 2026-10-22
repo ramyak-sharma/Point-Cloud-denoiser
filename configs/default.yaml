@@ -15,6 +15,11 @@ data:
   # Train/val/test split fractions over frames (deterministic, seeded).
   split: [0.8, 0.1, 0.1]
   seed: 42
+  # Carry KITTI's intensity channel through the pipeline. Required by IDSOR
+  # and the range-image network, both of which rely on weather backscatter
+  # returning far less energy than a solid surface. Geometry-only methods
+  # are unaffected — they are handed [:, :3].
+  use_intensity: true
 
 preprocessing:
   # Voxel-grid downsampling edge length (m). 0 disables downsampling.
@@ -26,16 +31,26 @@ preprocessing:
   min_z: null
 
 noise:
+  # Weather model: "lisa" = physics-based rain/fog (Mie extinction +
+  # Monte-Carlo backscatter + point loss, after Kilic et al. 2021);
+  # "classic" = the original heuristic fog blob (kept for comparison).
+  mode: lisa
+  rain_rate: 25.0         # mm/h (LISA mode) — "moderate" severity
   # Per-point Gaussian jitter (m) — models sensor vibration / ranging error.
   gaussian_sigma: 0.05
   # Uniform random outliers added, as a fraction of clean point count —
   # models multi-echo interference and spurious returns.
   outlier_ratio: 0.08
-  # Fog/rain-style backscatter points, as a fraction of clean point count.
-  # Sampled near the sensor with exponentially distributed range.
+  # Classic-mode fog parameters (ignored in lisa mode).
   fog_ratio: 0.04
   fog_mean_range: 8.0     # mean radial distance (m) of backscatter returns
   fog_max_range: 25.0
+  # Three-level severity presets (Robo3D convention); applied over this
+  # block by noise.apply_severity() in the severity ablation.
+  severity_presets:
+    light:    {rain_rate: 10.0, gaussian_sigma: 0.02, outlier_ratio: 0.04}
+    moderate: {rain_rate: 25.0, gaussian_sigma: 0.05, outlier_ratio: 0.08}
+    heavy:    {rain_rate: 50.0, gaussian_sigma: 0.08, outlier_ratio: 0.12}
 
 filters:
   sor:
@@ -44,20 +59,58 @@ filters:
   ror:
     nb_points: 4          # minimum neighbours required...
     radius: 0.6           # ...within this radius (m)
+  # IDSOR (arXiv:2602.05876). Normalises the k-NN distance statistic by range
+  # so far-field structure is not eroded, then tightens the threshold for
+  # weak returns. Defaults grid-searched on the VALIDATION split.
+  idsor:
+    nb_neighbors: 20
+    std_ratio: 1.5
+    range_beta: 3.0       # strength of the range normalisation
+    range_ref: 30.0       # reference range (m) for that normalisation
+    intensity_gamma: 2.0  # how sharply the threshold tightens with weak returns
+    intensity_floor: 0.7  # threshold multiplier at zero intensity
 
 patches:
   points_per_patch: 256   # k-NN patch size fed to the networks
   overlap_factor: 3.0     # avg number of patches covering each point
   max_patches_per_frame: 400
+  # How the PointNet-AE's unordered reconstruction is mapped back to the
+  # input cloud. "nn_project": each input point adopts its nearest
+  # reconstructed point (output cardinality == input, comparable with the
+  # DGCNN). "union": legacy concatenate-and-voxel-downsample, which returns
+  # ~1.7x the input points and confounds both CD and detection.
+  ae_recombination: nn_project
 
 model:
   pointnet_ae:
     latent_dim: 256
     decoder_hidden: 512
+  # Dual-head range-image denoiser (this project's own method): a removal
+  # head, as all adverse-weather literature has, PLUS a range-restoration
+  # head, which none of them have. Runs at 18.6 Hz end-to-end vs the DGCNN's
+  # 0.59 Hz because 2-D convolution replaces per-patch k-NN graph building.
+  range_unet:
+    height: 64            # HDL-64E laser channels
+    width: 2048           # azimuth bins; 92.8% label round-trip ceiling
+    base: 16              # base channel width
+    depth: 4              # encoder/decoder stages
+    batch_size: 2         # frames per step (each is 5x64x2048)
+    epochs: 15
+    lr: 1.0e-3
+    restore_weight: 1.0   # weight of the restoration L1 against removal BCE
+    pos_weight: 2.0       # positive-class weight; noise is ~1/3 of points
+    # Restoration head emits a bounded correction in METRES. True weather
+    # displacement is ~0.08 m mean / 0.23 m max, so 0.5 m is generous
+    # headroom while keeping the head's dynamic range matched to the task.
+    # Predicting normalised residuals instead made the head actively harmful.
+    max_correction: 0.5
   dgcnn:
     k: 16                 # neighbours per EdgeConv graph
     hidden_dims: [64, 64, 128]
     emb_dim: 256
+    # true: k-NN graph built once from XYZ and reused across layers
+    # (2-3x faster inference); false: original dynamic feature-space graph.
+    static_graph: true
 
 training:
   batch_size: 64
@@ -72,9 +125,18 @@ training:
   checkpoint_dir: results/checkpoints
   # Weight of the outlier-classification loss term (DGCNN only).
   outlier_loss_weight: 1.0
+  # Continue from an existing checkpoint (model + Adam state + epoch count)
+  # instead of restarting. The DGCNN needs ~5 min/epoch on MPS, so losing a
+  # run to an interruption is expensive; leave true for long trainings.
+  resume: true
 
 evaluation:
   num_test_frames: 10     # frames used for the metrics tables
+  # Independent noise draws per frame. Every method sees the identical noisy
+  # cloud for a given (frame, seed), so results are paired and the reported
+  # Wilcoxon signed-rank tests are valid. 3 seeds x 10 frames = 30 paired
+  # observations, enough for the ranking claims made in the report.
+  num_seeds: 3
   results_dir: results
 
 detection:
@@ -83,4 +145,10 @@ detection:
   config: pointpillars_hv_secfpn_8xb6-160e_kitti-3d-3class
   score_threshold: 0.4
   iou_threshold: 0.5      # BEV IoU for matching boxes across conditions
-  num_frames: 10
+  # All 28 held-out test frames x 3 noise seeds = 84 paired observations.
+  # Detection recall varies far more between frames than the geometric
+  # metrics do, so 10 frames could not resolve differences of ~0.05 —
+  # earlier runs at that size produced means that looked decisive and were
+  # not significant under a paired test.
+  num_frames: 28
+  num_seeds: 3

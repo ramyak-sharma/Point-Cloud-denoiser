@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LiDAR Denoising in Adverse Weather · Capstone CPG No. 5</title>
+<meta name="description" content="Interactive showcase of a LiDAR point-cloud denoising capstone: six methods compared on physics-simulated rain, with a live 3D explorer and real filters running in your browser.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌧️</text></svg>">
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="#top"><span class="brand-mark"></span> LiDAR Denoising</a>
+    <nav>
+      <a href="#explorer">Explorer</a>
+      <a href="#tuner">Live filters</a>
+      <a href="#results">Results</a>
+      <a href="#findings">Findings</a>
+      <a href="#method">Method</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ── contributors ticker ──────────────────────────────────────────── -->
+<section class="credits" aria-label="Contributors">
+  <p class="credits-title">Contributors</p>
+  <div class="credits-rail">
+    <!-- the list is duplicated once; the animation travels exactly one
+         copy-width, so the seam never shows and the loop is continuous -->
+    <div class="credits-track">
+      <ul class="credits-list">
+        <li><img src="img/jayantika.png" alt="" width="192" height="192" decoding="async"><span>Jayantika</span></li>
+        <li><img src="img/krish.png" alt="" width="192" height="192" decoding="async"><span>Krish Agarwal</span></li>
+        <li><img src="img/ramyak.png" alt="" width="192" height="192" decoding="async"><span>Ramyak Sharma</span></li>
+        <li><img src="img/shardool.png" alt="" width="192" height="192" decoding="async"><span>Shardool Dhodawat</span></li>
+        <li><img src="img/siddhant.png" alt="" width="192" height="192" decoding="async"><span>Siddhant Singh</span></li>
+      </ul>
+      <ul class="credits-list" aria-hidden="true">
+        <li><img src="img/jayantika.png" alt="" width="192" height="192" decoding="async"><span>Jayantika</span></li>
+        <li><img src="img/krish.png" alt="" width="192" height="192" decoding="async"><span>Krish Agarwal</span></li>
+        <li><img src="img/ramyak.png" alt="" width="192" height="192" decoding="async"><span>Ramyak Sharma</span></li>
+        <li><img src="img/shardool.png" alt="" width="192" height="192" decoding="async"><span>Shardool Dhodawat</span></li>
+        <li><img src="img/siddhant.png" alt="" width="192" height="192" decoding="async"><span>Siddhant Singh</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ── hero ─────────────────────────────────────────────────────────── -->
+<section id="top" class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <p class="eyebrow">Capstone CPG No. 5 · Thapar Institute, Patiala</p>
+      <h1>Seeing through rain<br>with LiDAR</h1>
+      <p class="lede">
+        Rain corrupts a LiDAR scan two ways at once: droplets create phantom
+        points in mid-air, and attenuation destroys distant returns outright.
+        We built six denoisers, and measured them not by how good the point
+        cloud <em>looks</em>, but by whether a 3D object detector could still
+        find the cars.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#explorer">Explore the data</a>
+        <a class="btn" href="#findings">Jump to findings</a>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><b>6</b><span>denoising methods</span></div>
+        <div class="stat"><b>31%</b><span>of returns destroyed by rain</span></div>
+        <div class="stat"><b>22 Hz</b><span>fastest learned model</span></div>
+        <div class="stat"><b>84</b><span>paired observations</span></div>
+      </div>
+    </div>
+    <figure class="hero-fig">
+      <div class="canvas-shell canvas-shell--sm">
+        <canvas id="hero-canvas"></canvas>
+        <div class="canvas-badge">drag to rotate</div>
+      </div>
+      <figcaption>A real KITTI frame under simulated 25 mm/h rain.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ── explorer ─────────────────────────────────────────────────────── -->
+<section id="explorer" class="section">
+  <div class="wrap">
+    <p class="eyebrow">Interactive</p>
+    <h2>The explorer</h2>
+    <p class="section-lede">
+      One held-out test frame, corrupted and then cleaned by each method.
+      Change the rain rate, switch methods, and recolour the cloud to see what
+      each one actually did.
+    </p>
+
+    <div class="explorer">
+      <div class="canvas-shell">
+        <canvas id="main-canvas"></canvas>
+        <div class="canvas-overlay" id="canvas-overlay"></div>
+        <div class="canvas-tools">
+          <button class="chip" id="btn-reset" title="Reset camera">Reset view</button>
+          <button class="chip" id="btn-rotate" title="Toggle auto-rotate" aria-pressed="false">Auto-rotate</button>
+        </div>
+      </div>
+
+      <aside class="panel">
+        <div class="field">
+          <label>Rain severity</label>
+          <div class="segmented" id="seg-severity" role="radiogroup"></div>
+          <p class="hint" id="hint-severity"></p>
+        </div>
+
+        <div class="field">
+          <label for="sel-method">Method</label>
+          <div class="segmented segmented--stack" id="seg-method" role="radiogroup"></div>
+        </div>
+
+        <div class="field">
+          <label>Colour by</label>
+          <div class="segmented" id="seg-colour" role="radiogroup"></div>
+        </div>
+
+        <div class="field">
+          <label class="switch">
+            <input type="checkbox" id="chk-removed" checked>
+            <span>Show removed points <em>(dark red)</em></span>
+          </label>
+          <p class="hint">Only meaningful for methods that delete points.</p>
+        </div>
+
+        <div class="field">
+          <label for="rng-size">Point size <output id="out-size">0.13</output></label>
+          <input type="range" id="rng-size" min="0.04" max="0.35" step="0.01" value="0.13">
+        </div>
+
+        <div class="readout" id="readout"></div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ── live tuner ───────────────────────────────────────────────────── -->
+<section id="tuner" class="section section--alt">
+  <div class="wrap">
+    <p class="eyebrow">Runs in your browser</p>
+    <h2>Tune a filter yourself</h2>
+    <p class="section-lede">
+      These are the real algorithms from the project, reimplemented in
+      JavaScript and recomputed live on 16,000 points as you drag. Scores are
+      measured against the ground-truth noise labels, so you can watch
+      precision trade against recall in real time.
+    </p>
+
+    <div class="explorer">
+      <div class="canvas-shell">
+        <canvas id="tune-canvas"></canvas>
+        <div class="canvas-overlay" id="tune-overlay"></div>
+        <div class="canvas-tools">
+          <button class="chip" id="btn-tune-reset">Reset view</button>
+        </div>
+      </div>
+
+      <aside class="panel">
+        <div class="field">
+          <label>Filter</label>
+          <div class="segmented segmented--stack" id="seg-filter" role="radiogroup"></div>
+        </div>
+        <div id="filter-controls"></div>
+        <div class="field">
+          <button class="btn btn-small" id="btn-defaults">Restore defaults</button>
+        </div>
+        <div class="readout" id="tune-readout"></div>
+        <p class="hint" id="tune-timing"></p>
+      </aside>
+    </div>
+
+    <div class="note">
+      <strong>Why only these three?</strong> SOR, ROR and IDSOR are geometric
+      procedures with no learned weights, so they can honestly run live. The
+      three neural models cannot, because PyTorch does not run in a browser,
+      so their outputs in the explorer above are precomputed on the same frame.
+    </div>
+  </div>
+</section>
+
+<!-- ── results ──────────────────────────────────────────────────────── -->
+<section id="results" class="section">
+  <div class="wrap">
+    <p class="eyebrow">Measured</p>
+    <h2>Results</h2>
+    <p class="section-lede">
+      Geometry over 30 paired observations; detection over 84. Every ranking
+      claim is backed by a Wilcoxon signed-rank test.
+    </p>
+
+    <div class="cards">
+      <article class="card">
+        <h3>Reconstruction error</h3>
+        <p class="card-note">
+          Read against the <em>oracle</em>, a perfect noise classifier. It
+          scores 0.104 m, not zero, because rain destroyed 31% of returns that
+          nothing can recover.
+        </p>
+        <div class="chart" id="chart-cd"></div>
+      </article>
+
+      <article class="card">
+        <h3>Oracle gap</h3>
+        <p class="card-note">
+          The share of <em>recoverable</em> error each method leaves behind.
+          0% means it matched a perfect classifier.
+        </p>
+        <div class="chart" id="chart-gap"></div>
+      </article>
+
+      <article class="card">
+        <h3>Downstream detection</h3>
+        <p class="card-note">
+          Fraction of a PointPillars detector's clean-cloud boxes that survive.
+          The detector never saw our noise model.
+        </p>
+        <div class="chart" id="chart-det"></div>
+      </article>
+
+      <article class="card">
+        <h3>Noise identification</h3>
+        <p class="card-note">
+          Precision, recall and F1 against ground-truth labels. The autoencoder
+          scores zero, because it has no removal head at all.
+        </p>
+        <div class="chart" id="chart-prf"></div>
+      </article>
+
+      <article class="card card--wide">
+        <h3>The central result: reconstruction error does not predict perception</h3>
+        <p class="card-note">
+          If Chamfer Distance were a good proxy, these points would lie on a
+          tight descending line. Across six methods the rank correlation is
+          only &rho;&nbsp;=&nbsp;&minus;0.60 (p&nbsp;=&nbsp;0.21), and the
+          autoencoder is a catastrophic outlier: better CD than the corrupted
+          input, near-zero detection recall.
+        </p>
+        <div class="chart" id="chart-scatter"></div>
+      </article>
+
+      <article class="card">
+        <h3>Speed versus accuracy</h3>
+        <p class="card-note">
+          Only the three fast methods clear the 10 Hz budget of a real
+          automotive LiDAR.
+        </p>
+        <div class="chart" id="chart-latency"></div>
+      </article>
+
+      <article class="card">
+        <h3>Robustness to severity</h3>
+        <p class="card-note">Methods degrade in parallel rather than crossing over.</p>
+        <div class="chart" id="chart-severity"></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ── findings ─────────────────────────────────────────────────────── -->
+<section id="findings" class="section section--alt">
+  <div class="wrap">
+    <p class="eyebrow">What we learned</p>
+    <h2>Findings</h2>
+
+    <div class="findings">
+      <article class="finding">
+        <span class="finding-n">01</span>
+        <h3>Perfect removal is the ceiling</h3>
+        <p>
+          The DGCNN closes <b>98.4%</b> of the recoverable error and is the only
+          method statistically indistinguishable from a perfect noise classifier
+          on detection (p&nbsp;=&nbsp;0.15). Every other method falls
+          significantly short. Nothing beats the oracle.
+        </p>
+      </article>
+
+      <article class="finding finding--key">
+        <span class="finding-n">02</span>
+        <h3>Chamfer Distance lies</h3>
+        <p>
+          The PointNet autoencoder <b>improves</b> reconstruction error by 8.9%
+          while destroying <b>76% of the detector's recall</b>
+          (p&nbsp;&lt;&nbsp;0.0001). It is the only method worse than doing
+          nothing: it smooths scan-line structure into a surface the detector
+          cannot parse, and the metric rewards it.
+        </p>
+        <p class="finding-more">
+          A second proof: our buggy patch-recombination scored a <em>better</em>
+          Chamfer Distance while emitting <b>232%</b> of the input points. The
+          metric is improvable by duplication as well as by blurring.
+        </p>
+      </article>
+
+      <article class="finding">
+        <span class="finding-n">03</span>
+        <h3>Real time needs a different representation</h3>
+        <p>
+          Moving from a k-NN graph to a 64&times;2048 range image gave a
+          <b>40&times; speedup</b>, 45 ms versus 1,806 ms, with the best
+          noise-removal F1 of any method (0.814). A rotating LiDAR already
+          <em>is</em> a 2-D array; recovering that topology makes convolution
+          possible.
+        </p>
+      </article>
+
+      <article class="finding finding--negative">
+        <span class="finding-n">04</span>
+        <h3>Negative result: displacement heads do nothing</h3>
+        <p>
+          Both learned models predict per-point position corrections. Neither
+          works: mean position error moves 0.0804 m &rarr; 0.0783 m, and
+          deleting the head entirely leaves Chamfer Distance unchanged.
+        </p>
+        <p class="finding-more">
+          This is correct behaviour, not undertraining. Range jitter is
+          <b>zero-mean</b>, so for a single observation the error-minimising
+          prediction <em>is</em> zero. Undoing it needs a surface prior no
+          per-point loss supplies.
+        </p>
+      </article>
+
+      <article class="finding finding--negative">
+        <span class="finding-n">05</span>
+        <h3>Negative result: self-supervision reproduces its rules</h3>
+        <p>
+          Trained on physics-derived pseudo-labels instead of ground truth, the
+          network reached F1 0.491 against pseudo-labels that already scored
+          0.484 alone, a <b>+1.4%</b> gain. It imitated its supervision rather
+          than surpassing it.
+        </p>
+        <p class="finding-more">
+          The gap to 0.813 supervised is a direct measurement of what
+          ground-truth labels are worth here.
+        </p>
+      </article>
+
+      <article class="finding">
+        <span class="finding-n">06</span>
+        <h3>We corrected ourselves</h3>
+        <p>
+          An earlier version of this work claimed removal was <em>not</em> the
+          ceiling, from 10 detection frames with no significance test. At 84
+          paired observations the ranking <b>reversed</b>. Seven such defects
+          are documented in the report rather than quietly fixed.
+        </p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ── method ───────────────────────────────────────────────────────── -->
+<section id="method" class="section">
+  <div class="wrap">
+    <p class="eyebrow">How it works</p>
+    <h2>Method</h2>
+
+    <div class="method-grid">
+      <div class="method-step">
+        <h3>1 · Data</h3>
+        <p>
+          Real KITTI LiDAR scans, held out by frame so no test scan is ever
+          seen in training. The raw split has no ground-truth 3D boxes, which
+          is why detection is measured by <em>consistency</em> against the
+          detector's own clean-cloud output rather than absolute mAP.
+        </p>
+      </div>
+      <div class="method-step">
+        <h3>2 · Weather</h3>
+        <p>
+          A physics model after LISA: Mie extinction
+          &alpha;&nbsp;=&nbsp;0.003&thinsp;R<sup>0.6</sup> at 905 nm gives
+          two-way transmittance, then droplet backscatter, lost returns, and
+          range jitter. At 25 mm/h it destroys <b>31%</b> of returns.
+        </p>
+      </div>
+      <div class="method-step">
+        <h3>3 · Denoise</h3>
+        <p>
+          Three untrained filters (SOR+ROR, IDSOR, temporal) and three learned
+          models (PointNet-AE, DGCNN, RangeRestoreNet). Intensity matters:
+          real returns median 0.150 against 0.051 for weather noise.
+        </p>
+      </div>
+      <div class="method-step">
+        <h3>4 · Evaluate</h3>
+        <p>
+          Every method sees the <em>identical</em> corrupted cloud per (frame,
+          seed), so results are paired. Reconstruction, noise-removal F1,
+          retention, downstream detection and latency, because they disagree.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <div>
+      <p class="footer-title">LiDAR Point Cloud Denoising for Autonomous Driving</p>
+      <p class="muted">Capstone Project CPG No. 5 · Department of Computer Science and Engineering,
+      Thapar Institute of Engineering and Technology, Patiala · Mentor: Dr. Lovi Dhamija</p>
+    </div>
+    <div class="footer-links">
+      <a href="assets/final_report.pdf">Technical report (PDF)</a>
+    </div>
+  </div>
+</footer>
+
+<div id="loading" class="loading"><div class="spinner"></div><p>Loading point clouds…</p></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

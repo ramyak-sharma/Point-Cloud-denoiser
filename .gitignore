@@ -13,3 +13,19 @@ results/cache/
 
 # TeX build intermediates
 report/*.aux report/*.log report/*.out report/*.toc
+
+# Open3D viewer artifacts (written when saving a view from scripts/demo.py)
+DepthCamera_*.json
+DepthCapture_*.png
+ScreenCamera_*.json
+ScreenCapture_*.png
+
+# Corrupted .git from an earlier session, kept locally as a safety copy only
+.git.corrupt-backup/
+
+# Internal interview-prep explainer: kept on disk only, never committed and
+# never deployed, so it cannot reach the public showcase site by accident.
+EXPLAINER.md
+EXPLAINER.pdf
+report/viva_qna.tex
+report/viva_qna.pdf
